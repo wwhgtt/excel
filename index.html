@@ -19,30 +19,19 @@
 </style>
 </head>
 <body>
-<b>JS-XLSX (XLSX/XLSB/XLSM/XLS/XML) Live Demo</b><br />
 Output Format:
 <select name="format">
 <option value="csv" selected> CSV</option>
-<option value="json"> JSON</option>
-<option value="form"> FORMULAE</option>
 </select><br />
-<!--<input type="radio" name="format" value="csv" checked> CSV<br>
-<input type="radio" name="format" value="json"> JSON<br>
-<input type="radio" name="format" value="form"> FORMULAE<br> -->
-
 <div id="drop">拖动excel文件到此位置</div>
-<!-- <p><input type="file" name="xlfile" id="xlf" /> ... or click here to select a file</p> -->
-<!-- <textarea id="b64data">... or paste a base64-encoding here</textarea> -->
-<!-- //这句不能删除 -->
-<!-- <input type="button" id="dotext" value="Click here to process the base64 text" onclick="b64it();"/><br /> -->
+<div class="duoyu" style="display:none">
 Advanced Demo Options: <br />
 Use Web Workers: (when available) <input type="checkbox" name="useworker" checked><br />
 Use Transferrables: (when available) <input type="checkbox" name="xferable" checked><br />
 Use readAsBinaryString: (when available) <input type="checkbox" name="userabs" checked><br />
+</div>
 <pre id="out"></pre>
 <br />
-<!-- uncomment the next line here and in xlsxworker.js for encoding support -->
-<!--<script src="dist/cpexcel.js"></script>-->
 <script src="shim.js"></script>
 <script src="jszip.js"></script>
 <script src="xlsx.js"></script>
@@ -143,17 +132,6 @@ function get_radio_value( radioName ) {
 		}
 	}
 }
-
-// function to_json(workbook) {
-// 	var result = {};
-// 	workbook.SheetNames.forEach(function(sheetName) {
-// 		var roa = X.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
-// 		if(roa.length > 0){
-// 			result[sheetName] = roa;
-// 		}
-// 	});
-// 	return result;
-// }
 //这个是必须的
 function to_csv(workbook) {
 	var result = [];
@@ -167,36 +145,9 @@ function to_csv(workbook) {
 	});
 	return result.join("\n");
 }
-
-// function to_formulae(workbook) {
-// 	var result = [];
-// 	workbook.SheetNames.forEach(function(sheetName) {
-// 		var formulae = X.utils.get_formulae(workbook.Sheets[sheetName]);
-// 		if(formulae.length > 0){
-// 			result.push("SHEET: " + sheetName);
-// 			result.push("");
-// 			result.push(formulae.join("\n"));
-// 		}
-// 	});
-// 	return result.join("\n");
-// }
-
-// var tarea = document.getElementById('b64data');
-// function b64it() {
-// 	if(typeof console !== 'undefined') console.log("onload", new Date());
-// 	var wb = X.read(tarea.value, {type: 'base64',WTF:wtf_mode});
-// 	process_wb(wb);
-// }
-//这个是必须的
 function process_wb(wb) {
 	var output = "";
 	switch(get_radio_value("format")) {
-		case "json":
-			output = JSON.stringify(to_json(wb), 2, 2);
-			break;
-		case "form":
-			output = to_formulae(wb);
-			break;
 		default:
 		output = to_csv(wb);
 	}
@@ -248,39 +199,6 @@ if(drop.addEventListener) {
 	drop.addEventListener('dragover', handleDragover, false);
 	drop.addEventListener('drop', handleDrop, false);
 }
-
-
-// var xlf = document.getElementById('xlf');
-// function handleFile(e) {
-// 	rABS = document.getElementsByName("userabs")[0].checked;
-// 	use_worker = document.getElementsByName("useworker")[0].checked;
-// 	var files = e.target.files;
-// 	var f = files[0];
-// 	{
-// 		var reader = new FileReader();
-// 		var name = f.name;
-// 		reader.onload = function(e) {
-// 			if(typeof console !== 'undefined') console.log("onload", new Date(), rABS, use_worker);
-// 			var data = e.target.result;
-// 			if(use_worker) {
-// 				xw(data, process_wb);
-// 			} else {
-// 				var wb;
-// 				if(rABS) {
-// 					wb = X.read(data, {type: 'binary'});
-// 				} else {
-// 				var arr = fixdata(data);
-// 					wb = X.read(btoa(arr), {type: 'base64'});
-// 				}
-// 				process_wb(wb);
-// 			}
-// 		};
-// 		if(rABS) reader.readAsBinaryString(f);
-// 		else reader.readAsArrayBuffer(f);
-// 	}
-// }
-
-// if(xlf.addEventListener) xlf.addEventListener('change', handleFile, false);
 </script>
 </body>
 </html>
