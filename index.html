@@ -21,7 +21,7 @@
 <body>
 Output Format:
 <select name="format">
-<option value="csv" selected> CSV</option>
+<option value="json" selected> JSON</option>
 </select><br />
 <div id="drop">拖动excel文件到此位置</div>
 <div class="duoyu" style="display:none">
@@ -30,7 +30,7 @@ Use Web Workers: (when available) <input type="checkbox" name="useworker" checke
 Use Transferrables: (when available) <input type="checkbox" name="xferable" checked><br />
 Use readAsBinaryString: (when available) <input type="checkbox" name="userabs" checked><br />
 </div>
-<pre id="out"></pre>
+<div id="out"></div>
 <br />
 <script src="shim.js"></script>
 <script src="jszip.js"></script>
@@ -78,12 +78,13 @@ function fixdata(data) {
 function ab2str(data) {
 	var o = "", l = 0, w = 10240;
 	for(; l<data.byteLength/w; ++l) o+=String.fromCharCode.apply(null,new Uint16Array(data.slice(l*w,l*w+w)));
-	o+=String.fromCharCode.apply(null, new Uint16Array(data.slice(l*w)));
+	o+=String.fromCharCode.apply(null, new Uint16Array(data.slice(l*w)));//打印这块的o的时候也出现了文字
 	return o;
 }
 
 function s2ab(s) {
 	var b = new ArrayBuffer(s.length*2), v = new Uint16Array(b);
+	//console.log(b); 此时b为空
 	for (var i=0; i != s.length; ++i) v[i] = s.charCodeAt(i);
 	return [v, b];
 }
@@ -107,7 +108,7 @@ function xw_xfer(data, cb) {
 		switch(e.data.t) {
 			case 'ready': break;
 			case 'e': console.error(e.data.d); break;
-			default: xx=ab2str(e.data).replace(/\n/g,"\\n").replace(/\r/g,"\\r"); console.log("done"); cb(JSON.parse(xx)); break;
+			default: xx=ab2str(e.data).replace(/\n/g,"\\n").replace(/\r/g,"\\r"); console.log("done"); cb(JSON.parse(xx)); break;//从这一块打印出来的xx出现的文字
 		}
 	};
 	if(rABS) {
@@ -115,7 +116,8 @@ function xw_xfer(data, cb) {
 		worker.postMessage(val[1], [val[1]]);
 	} else {
 		worker.postMessage(data, [data]);
-	}
+	}                                         //我运行到这一步了
+	//console.log(data);  已经接近了
 }
 
 function xw(data, cb) {
@@ -128,29 +130,32 @@ function get_radio_value( radioName ) {
 	var radios = document.getElementsByName( radioName );
 	for( var i = 0; i < radios.length; i++ ) {
 		if( radios[i].checked || radios.length === 1 ) {
+			//console.log(radios);
 			return radios[i].value;
 		}
 	}
 }
 //这个是必须的
-function to_csv(workbook) {
-	var result = [];
+function to_json(workbook) {
+	var result = {};
 	workbook.SheetNames.forEach(function(sheetName) {
-		var csv = X.utils.sheet_to_csv(workbook.Sheets[sheetName]);
-		if(csv.length > 0){
-			result.push("SHEET: " + sheetName);
-			result.push("");
-			result.push(csv);
+		var roa = X.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
+		if(roa.length > 0){
+			result[sheetName] = roa;
 		}
 	});
-	return result.join("\n");
+	return result;
 }
 function process_wb(wb) {
 	var output = "";
 	switch(get_radio_value("format")) {
-		default:
-		output = to_csv(wb);
+		case "json":
+			output = JSON.stringify(to_json(wb), 2, 2);
+			console.log(output);  //这边是最终输出
+			break;
+
 	}
+	//console.log(output);
 	if(out.innerText === undefined) out.textContent = output;
 	else out.innerText = output;
 	if(typeof console !== 'undefined') console.log("output", new Date());
@@ -170,6 +175,8 @@ function handleDrop(e) {
 		reader.onload = function(e) {
 			if(typeof console !== 'undefined') console.log("onload", new Date(), rABS, use_worker);
 			var data = e.target.result;
+			var abcd=JSON.stringify(data);
+			//console.log(abcd);
 			if(use_worker) {
 				xw(data, process_wb);
 			} else {
